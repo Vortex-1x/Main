@@ -1,128 +1,175 @@
-import pygame
-import time
-import random
+from flet import *
+import sqlite3
 
-# إعداد الألوان
-white = (255, 255, 255)
-yellow = (255, 255, 102)
-black = (0, 0, 0)
-red = (213, 50, 80)
-green = (0, 255, 0)
-blue = (50, 153, 213)
+conn = sqlite3.connect("dato.db",check_same_thread=False)
+cursor = conn.cursor()
+cursor.execute(""" CREATE TABLE IF NOT EXISTS student(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stdname Text,
+    stdmail TEXT,
+    stdphone TEXT,
+    stdaddress TEXT,
+    stmathmatic INTEGER ,
+    starabic INTEGER,
+    stfrance INTEGER,
+    stenglish INTEGER,
+    stdrawing INTEGER,
+    stchemistry INTEGER
+)""")
+conn.commit()
 
-# إعداد حجم الشاشة
-dis_width = 800
-dis_height = 600
 
-# إعداد سرعة الثعبان
-snake_speed = 15
-snake_block = 20
+def main(page:Page):
+    page.title = 'Rakwan'
+    page.scroll = 'auto'
+    page.window.top = 1
+    page.window.left= 960
+    page.window.width = 390
+    page.window.height = 740
+    page.bgcolor = 'white'
+    page.theme_mode = ThemeMode.LIGHT
 
-# إعداد شاشة اللعبة
-dis = pygame.display.set_mode((dis_width, dis_height))
-pygame.display.set_caption('Snake Game by Yacoub')
+    ##############################
+    
+    tabe_name = 'student'
+    query = f'SELECT COUNT(*) FROM {tabe_name}'
+    cursor.execute(query)
+    result = cursor.fetchone()
+    row_count = result[0]
 
-clock = pygame.time.Clock()
+    
+    def add(e):
+        cursor.execute("INSERT INTO student (stdname,stdmail,stdphone,stdaddress,stmathmatic,starabic,stfrance,stenglish,stdrawing,stchemistry) VALUES(?,?,?,?,?,?,?,?,?,?)",(tname.value,tmail.value,tphone.value,taddress.value,mathmatic.value,arabic.value,france.value,english.value,draw.value,chemistry.value))
+        conn.commit()
+    def show(e):
+        page.clean()
+        c = conn.cursor()
+        c.execute("SELECT * FROM student")
+        users = c.fetchall()
+        print(users)
+        
+        if not users == "":
+            keys = ['id','stdname','stdmail','stdphone','stdaddress','stmathmatic','starabic','stfrance','stenglish','stdrawing','stchemistry']
+            result = [dict(zip(keys,values)) for values in users]
+            for x in result:
+                
+                ###### marks ########
+                m = x['stmathmatic']
+                a = x['starabic']
+                f = x['stfrance']
+                e = x['stenglish']
+                d = x['stenglish']
+                c = x['stchemistry']
+                res = m + a + f + e + d + c 
+                if res < 50 :
+                    a = Text('😭 راسب',size=19,color='white')
+                if res > 50 :
+                    a = Text('🥰 ناجح',size=19,color='white')
+                
+                
+                page.add(
+                    Card(
+                        color='black',
+                        content=Container(
+                            content=Column([
+                                ListTile(
+                                    leading = Icon(icons.PERSON),
+                                    title=Text('Name : '+ x['stdname'],color='white'),
+                                    subtitle = Text('Student Email : '+x['stdmail'],color='amber')
+                                ),
+                                Row([
+                                    Text('Phone : '+x['stdphone'],color='green'),
+                                    Text('Address : '+x['stdaddress'],color='green')
+                                ],alignment=MainAxisAlignment.CENTER),
+                                
+                                Row([
+                                    Text('رياضيات : ' + str(x['stmathmatic']),color='blue'),
+                                    Text('عربي : ' + str(x['starabic']),color='blue'),
+                                    Text('فرنسي : ' + str(x['stfrance']),color='blue')
+                                ],alignment=MainAxisAlignment.END),
+                                Row([
+                                    Text('انجليزي : ' + str(x['stenglish']),color='blue'),
+                                    Text('رسم : ' + str(x['stdrawing']),color='blue'),
+                                    Text('كيمياء : ' + str(x['stchemistry']),color='blue')
+                                ],alignment=MainAxisAlignment.END),
+                                
+                                Row([
+                                    a
+                                ],alignment=MainAxisAlignment.CENTER)
+                                
+                            ])
+                        )
+                    )
+                )
+                page.update()
+    
+    ########### Feilds ###########
+    tname = TextField(label='اسم الطالب',icon=icons.PERSON,rtl=True,height=38)
+    tmail = TextField(label='البريد الالكتروني',icon=icons.MAIL,rtl=True,height=38)
+    tphone = TextField(label='رقم الهاتف',icon=icons.PHONE,rtl=True,height=38)
+    taddress = TextField(label='العنوان او السكن',icon=icons.LOCATION_CITY,rtl=True,height=38)
+    ##############################
+    
+    ########### marks ###########
+    marktext = Text("Marks Student - علامات الطالب",text_align='center',weight='bold')
+    mathmatic = TextField(label='رياضيات',width=110,rtl=True,height=38)
+    arabic = TextField(label='عربي',width=110,rtl=True,height=38)
+    france = TextField(label='فرنسية',width=110,rtl=True,height=38)
+    english = TextField(label='انجليزية',width=110,rtl=True,height=38)
+    draw = TextField(label='الرسم',width=110,rtl=True,height=38)
+    chemistry = TextField(label='كيمياء',width=110,rtl=True,height=38)
+    ##############################
+    
+    addbuttn = ElevatedButton(
+        "اضافة طالب جديد",
+        width=170,
+        style=ButtonStyle(bgcolor='blue',color='white',padding=15),
+        on_click=add
+    )
+    
+    showbuttn = ElevatedButton(
+        "عرض كل الطلاب",
+        width=170,
+        style=ButtonStyle(bgcolor='blue',color='white',padding=15),
+        on_click=show
+    )
+    
+    
+    page.add(
+        Row([
+            Image(src="home.gif",width=280)
+            ],alignment=MainAxisAlignment.CENTER),
+        
+        Row([
+            Text("تطبيق الطالب والمعلم في جيبك",size=20,font_family="IBM Plex Sans Arabic",color='black')
+            ],alignment=MainAxisAlignment.CENTER),
+        
+        Row([
+            Text(" عدد الطلاب المسجلين : ",size=20,font_family="IBM Plex Sans Arabic",color='blue'),
+            Text(row_count,size=20,font_family="IBM Plex Sans Arabic",color='black'),
+            ],alignment=MainAxisAlignment.CENTER,rtl=True),
+        tname,
+        tmail,
+        tphone,
+        taddress,
+        
+        Row([
+            marktext
+            ],alignment=MainAxisAlignment.CENTER,rtl=True),
+        
+        Row([
+            mathmatic,arabic,france
+            ],alignment=MainAxisAlignment.CENTER,rtl=True),
+        
+        Row([
+            english,draw,chemistry
+            ],alignment=MainAxisAlignment.CENTER,rtl=True),
+        
+        Row([
+            addbuttn,showbuttn
+        ],alignment=MainAxisAlignment.CENTER,rtl=True)
+        
+    )
 
-# إعداد الخطوط
-font_style = pygame.font.SysFont("bahnschrift", 25)
-score_font = pygame.font.SysFont("comicsansms", 35)
-
-# دالة لحساب النقاط
-def Your_score(score):
-    value = score_font.render("Your Score: " + str(score), True, yellow)
-    dis.blit(value, [0, 0])
-
-# دالة لرسم الثعبان
-def our_snake(snake_block, snake_list):
-    for x in snake_list:
-        pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])
-
-# دالة لعرض رسالة على الشاشة
-def message(msg, color):
-    mesg = font_style.render(msg, True, color)
-    dis.blit(mesg, [dis_width / 6, dis_height / 3])
-
-# دالة اللعبة الرئيسية
-def gameLoop():
-    game_over = False
-    game_close = False
-
-    x1 = dis_width / 2
-    y1 = dis_height / 2
-
-    x1_change = 0
-    y1_change = 0
-
-    snake_List = []
-    Length_of_snake = 1
-
-    foodx = round(random.randrange(0, dis_width - snake_block) / 20.0) * 20.0
-    foody = round(random.randrange(0, dis_height - snake_block) / 20.0) * 20.0
-
-    while not game_over:
-
-        while game_close == True:
-            dis.fill(blue)
-            message("You Lost! Press Q-Quit or C-Play Again", red)
-            Your_score(Length_of_snake - 1)
-            pygame.display.update()
-
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        game_over = True
-                        game_close = False
-                    if event.key == pygame.K_c:
-                        gameLoop()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                game_over = True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    x1_change = -snake_block
-                    y1_change = 0
-                elif event.key == pygame.K_RIGHT:
-                    x1_change = snake_block
-                    y1_change = 0
-                elif event.key == pygame.K_UP:
-                    y1_change = -snake_block
-                    x1_change = 0
-                elif event.key == pygame.K_DOWN:
-                    y1_change = snake_block
-                    x1_change = 0
-
-        if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
-            game_close = True
-        x1 += x1_change
-        y1 += y1_change
-        dis.fill(green)
-        pygame.draw.rect(dis, blue, [foodx, foody, snake_block, snake_block])
-        snake_Head = []
-        snake_Head.append(x1)
-        snake_Head.append(y1)
-        snake_List.append(snake_Head)
-        if len(snake_List) > Length_of_snake:
-            del snake_List[0]
-
-        for x in snake_List[:-1]:
-            if x == snake_Head:
-                game_close = True
-
-        our_snake(snake_block, snake_List)
-        Your_score(Length_of_snake - 1)
-
-        pygame.display.update()
-
-        if x1 == foodx and y1 == foody:
-            foodx = round(random.randrange(0, dis_width - snake_block) / 20.0) * 20.0
-            foody = round(random.randrange(0, dis_height - snake_block) / 20.0) * 20.0
-            Length_of_snake += 1
-
-        clock.tick(snake_speed)
-
-    pygame.quit()
-    quit()
-
-gameLoop()
+    page.update()
+app(main)
